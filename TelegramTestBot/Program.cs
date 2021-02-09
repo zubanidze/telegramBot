@@ -72,6 +72,42 @@ namespace TelegramTestBot
                     document: "https://media.tenor.com/images/e9cc959f643d3aac2322295eb95d19ce/tenor.gif"
                     );
             }
+            if(e.Message.Text == "/sendsticker")
+            {
+                Message stickerMessage = await botClient.SendStickerAsync(
+                chatId: e.Message.Chat,
+                sticker: "https://raw.githubusercontent.com/zubanidze/telegramBot/master/TelegramTestBot/1146271698.webp");
+            }
+            if(e.Message.Text =="/sendlocation")
+            {
+                Message locationMessage = await botClient.SendVenueAsync(
+                chatId: e.Message.Chat.Id,
+                latitude: 56.8393f,
+                longitude: 60.5836f,
+                title: "ИНСТИТУТ ПРОЕКТИРОВАНИЯ, архитектуры и дизайна",
+                address: "ул. Шейнкмана, 10, Екатеринбург, Свердловская обл., 620014",
+                replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl(
+                "Перейти на сайт организации",
+                "https://www.inpad.ru/")));
+            }
+            if (e.Message.Text == "/sendcontact")
+            {
+                Message contactMessage = await botClient.SendContactAsync(
+                chatId: e.Message.Chat.Id,
+                phoneNumber: "+73432875694",
+                firstName: "Виктор",
+                lastName: "Сальников");
+            }
+            if(!e.Message.Text.Contains("/"))
+            {
+
+                Message textMessage = await botClient.SendTextMessageAsync(
+                chatId: e.Message.Chat,
+                text: "Такой команды пока нет :(",
+                parseMode: ParseMode.Default,
+                replyMarkup : new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData(
+                     "А какие есть?")));                
+            }
         }
     }
 }
