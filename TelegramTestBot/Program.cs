@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace TelegramTestBot
     class Program
     {
         static ITelegramBotClient botClient;
+        public static InlineKeyboardMarkup keyboard;
 
         static void Main()
         {
@@ -26,8 +28,41 @@ namespace TelegramTestBot
             );
 
             botClient.OnMessage += Bot_OnMessage;
-            botClient.StartReceiving();
+            List<InlineKeyboardButton> keyboardButtonsRow1 = new List<InlineKeyboardButton>();
+            List<InlineKeyboardButton> keyboardButtonsRow2 = new List<InlineKeyboardButton>();
+            keyboardButtonsRow1.Add(InlineKeyboardButton.WithCallbackData("А какие есть?", "callback1"));
+            keyboardButtonsRow1.Add(InlineKeyboardButton.WithCallbackData("Другой тип ответа", "callback2"));
+            keyboardButtonsRow2.Add(InlineKeyboardButton.WithCallbackData("снизу", "callback23"));
+            List<List<InlineKeyboardButton>> rowList = new List<List<InlineKeyboardButton>>();
+            rowList.Add(keyboardButtonsRow1);
+            rowList.Add(keyboardButtonsRow2);
+            keyboard = new InlineKeyboardMarkup(rowList);
 
+            botClient.OnCallbackQuery += async (object sc, CallbackQueryEventArgs ev) =>
+            {
+                var message = ev.CallbackQuery.Message;
+                if (ev.CallbackQuery.Data == "callback1")
+                {
+                    message = await botClient.SendTextMessageAsync(
+                chatId: ev.CallbackQuery.Message.Chat,
+                text: "hello - отправит вам сообщение Hello, world!\n" +
+                "sendpic - отправит вам любую картинку\n" +
+                "sendpoll - отправит вам любое голосование\n" +
+                "sendfile - отправит вам любой файл\n" +
+                "sendsticker - отправит стикер\n" +
+                "sendlocation - отправит вам локацию главного офиса компании\n" +
+                "sendcontact - отравит вам рабочий телефон директора компании",
+                parseMode: ParseMode.Default,
+                disableNotification: false);
+                }
+                else
+                if (ev.CallbackQuery.Data == "callback2")
+                {
+                    await botClient.AnswerCallbackQueryAsync(ev.CallbackQuery.Id, "ответ типа callBackQueryAnswer");
+                }
+            };
+            botClient.StartReceiving();
+            
             Console.WriteLine("Press any key to exit");
             Console.ReadKey();
 
@@ -37,6 +72,7 @@ namespace TelegramTestBot
 
         static async void Bot_OnMessage(object sender, MessageEventArgs e)
         {
+           
             if (e.Message.Text == "/hello")
             {
                 Message textMessage = await botClient.SendTextMessageAsync(
@@ -98,15 +134,61 @@ namespace TelegramTestBot
                 firstName: "Виктор",
                 lastName: "Сальников");
             }
-            if(!e.Message.Text.Contains("/"))
-            {
-
+            if((!e.Message.Text.Contains("/") && (!e.Message.Text.All(char.IsDigit)))) 
+            {               
                 Message textMessage = await botClient.SendTextMessageAsync(
                 chatId: e.Message.Chat,
                 text: "Такой команды пока нет :(",
                 parseMode: ParseMode.Default,
-                replyMarkup : new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData(
-                     "А какие есть?")));                
+                replyMarkup : keyboard);              
+            }
+            if(e.Message.Text == "custom")
+            {
+                var rkm = new ReplyKeyboardMarkup();
+                var rows = new List<KeyboardButton[]>();
+                var cols = new List<KeyboardButton>();
+                for (var Index = 1; Index < 17; Index++)
+                {
+                    cols.Add(new KeyboardButton("" + Index));
+                    if (Index % 4 != 0) continue;
+                    rows.Add(cols.ToArray());
+                    cols = new List<KeyboardButton>();
+                }
+                rkm.Keyboard = rows.ToArray();
+
+
+                await botClient.SendTextMessageAsync(
+                    e.Message.Chat,
+                    "Choose",
+                    replyMarkup: rkm);
+            }
+            if (e.Message.Text == "1")
+            {
+                Message textMessage = await botClient.SendTextMessageAsync(
+                chatId: e.Message.Chat,
+                text: "Hello, world!",
+                parseMode: ParseMode.Default,
+                disableNotification: false);
+            }
+            if(e.Message.Text == "2")
+            {
+                Message contactMessage = await botClient.SendContactAsync(
+                chatId: e.Message.Chat.Id,
+                phoneNumber: "+73432875694",
+                firstName: "Виктор",
+                lastName: "Сальников");
+            }
+            if (e.Message.Text == "3")
+            {
+                Message pollMessage = await botClient.SendPollAsync(
+                chatId: e.Message.Chat,
+                isAnonymous: false,
+                question: "Ты работаешь в ИнПАДе?",
+                options: new[]
+                {
+                    "Да",
+                    "Нет, в другом месте"
+                });
             }
         }
     }
